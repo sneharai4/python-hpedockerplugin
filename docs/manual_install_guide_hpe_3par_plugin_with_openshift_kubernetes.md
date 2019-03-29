@@ -87,7 +87,7 @@ sudo docker run -d -v /usr/share/ca-certificates/:/etc/ssl/certs -p 40010:40010 
 
 > **NOTE:** This section assumes that you already have **Kubernetes** or **OpenShift** deployed in your environment, in order to run the following commands.
 
-1. Install the iSCSI and Multipath packages
+1. Install the iSCSI and Multipath packages(Not needed for SLES)
 
 ```
 $ yum install -y iscsi-initiator-utils device-mapper-multipath
@@ -135,7 +135,14 @@ $ systemctl enable iscsid multipathd
 $ systemctl start iscsid multipathd
 ```
 
-4. Configure `MountFlags` in the Docker service to allow shared access to Docker volumes
+For SLES:
+```
+$ dracut --force --add multipath
+$ sudo systemctl enable multipathd
+$ sudo systemctl start multipathd
+```
+
+4. Configure `MountFlags` in the Docker service to allow shared access to Docker volumes(Not needed for SLES)
 
 ```
 $ vi /usr/lib/systemd/system/docker.service
@@ -145,7 +152,7 @@ $ vi /usr/lib/systemd/system/docker.service
 >
 >Save and exit
 
-5. Restart the Docker daemon
+5. Restart the Docker daemon(Not needed for SLES)
 
 ```
 $ systemctl daemon-reload
@@ -200,6 +207,31 @@ hpedockerplugin:
      - /lib64:/lib64
      - /var/run/docker.sock:/var/run/docker.sock
      - /opt/hpe/data:/opt/hpe/data:rshared
+```
+
+For SLES use:
+```
+hpedockerplugin:
+  image: hpestorage/legacyvolumeplugin:3.1
+  container_name: plugin_container
+  net: host
+  restart: always
+  privileged: true
+  volumes:
+     - /dev:/dev
+     - /run/lock:/run/lock
+     - /var/lib:/var/lib
+     - /var/run/docker/plugins:/var/run/docker/plugins:rw
+     - /etc:/etc
+     - /root/.ssh:/root/.ssh
+     - /sys:/sys
+     - /root/plugin/certs:/root/plugin/certs
+     - /sbin/iscsiadm:/sbin/ia
+     - /lib/modules:/lib/modules
+     - /lib64:/lib64
+     - /var/run/docker.sock:/var/run/docker.sock
+     - /var/lib/rancher:/var/lib/rancher:rshared
+     - /usr/lib64:/usr/lib64
 ```
 
 >Save and exit
