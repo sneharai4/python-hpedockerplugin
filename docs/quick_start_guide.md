@@ -99,6 +99,52 @@ $ systemctl daemon-reload
 $ systemctl restart docker.service
 ```
 
+#### SLES 12 SP3 or later:
+
+1. Configure `/etc/multipath.conf`
+
+```
+$ vi /etc/multipath.conf
+```
+
+>Copy the following into `/etc/multipath.conf`
+
+```
+defaults
+{
+    polling_interval 10
+    max_fds 8192
+}
+
+devices
+{
+    device
+	{
+        vendor                  "3PARdata"
+        product                 "VV"
+        no_path_retry           18
+        features                "0"
+        hardware_handler        "0"
+        path_grouping_policy    multibus
+        #getuid_callout         "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+        path_selector           "round-robin 0"
+        rr_weight               uniform
+        rr_min_io_rq            1
+        path_checker            tur
+        failback                immediate
+    }
+}
+```
+
+2. Enable multipathd services
+
+```
+$ dracut --force --add multipath
+$ sudo systemctl enable multipathd
+$ sudo systemctl start multipathd
+```
+
+
 Now the systems are ready to setup the HPE 3PAR Volume Plug-in for Docker.
 
 
